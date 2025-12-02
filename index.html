@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sísiforce</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Canvas de fondo con estrellas */
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      display: block;
+    }
+
+    .content {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    /* Marco de imagen 480x480 (responsivo) */
+    .image-frame {
+      width: min(480px, 80vw);
+      aspect-ratio: 1 / 1;
+      border-radius: 24px;
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      background:
+        radial-gradient(circle at 30% 20%, #444 0%, #222 35%, #050505 80%);
+      box-shadow:
+        0 0 40px rgba(0, 0, 0, 0.9),
+        0 0 80px rgba(255, 255, 255, 0.12) inset;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Simulación de imagen (puedes cambiar por <img>) */
+    .image-frame::before {
+      content: "Tu imagen 480×480 aquí";
+      font-size: clamp(14px, 2vw, 18px);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    h1 {
+      font-size: clamp(22px, 3vw, 30px);
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
+    }
+
+    #countdown {
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: clamp(18px, 2.5vw, 22px);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+
+    #countdown span.label {
+      font-size: 0.7em;
+      opacity: 0.8;
+    }
+
+    #countdown .unit {
+      display: inline-block;
+      margin: 0 6px;
+    }
+
+    /* Frases animadas con baja opacidad */
+    #phrases-container {
+      margin-top: 10px;
+      min-height: 2.5em; /* evita saltos al cambiar de frase */
+    }
+
+    #phrase-text {
+      font-size: clamp(14px, 2vw, 18px);
+      letter-spacing: 0.06em;
+      opacity: 0;
+      color: rgba(255, 255, 255, 0.22);
+      transition: opacity 2s ease-in-out;
+      white-space: pre-wrap;
+    }
+
+    #phrase-text.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+
+  <div class="content">
+
+    <div id="countdown"></div>
+
+    <div id="phrases-container">
+      <div id="phrase-text"></div>
+    </div>
+  </div>
+
+  <script>
+    /********** ESTRELLAS TIPO UNIVERSO **********/
+    const canvas = document.getElementById("bg-canvas");
+    const ctx = canvas.getContext("2d");
+
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    window.addEventListener("resize", () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      initStars();
+    });
+
+    const STAR_COUNT = 320;
+    const stars = [];
+
+    function initStars() {
+      stars.length = 0;
+      for (let i = 0; i < STAR_COUNT; i++) {
+        stars.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          r: Math.random() * 1.8 + 0.3,
+          depth: Math.random() * 1.5 + 0.5,      // profundidad (parallax)
+          baseAlpha: Math.random() * 0.6 + 0.2,
+          twinkleSpeed: Math.random() * 1.5 + 0.5,
+          twinkleOffset: Math.random() * Math.PI * 2
+        });
+      }
+    }
+
+    initStars();
+
+    function animateStars() {
+      const t = performance.now() * 0.001;
+
+      // Fondo espacial suave
+      const grad = ctx.createRadialGradient(
+        width / 2, height / 2, 0,
+        width / 2, height / 2, Math.max(width, height)
+      );
+      grad.addColorStop(0, "#020212");
+      grad.addColorStop(0.5, "#020010");
+      grad.addColorStop(1, "#000000");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+
+      for (const s of stars) {
+        // movimiento sutil, como si la cámara se desplazara
+        const speed = 0.12 * s.depth;
+        s.y += speed;
+        if (s.y > height) {
+          s.y = -5;
+          s.x = Math.random() * width;
+        }
+
+        // twinkle (parpadeo suave)
+        const twinkle =
+          Math.sin(t * s.twinkleSpeed + s.twinkleOffset) * 0.5 + 0.5; // 0..1
+        const alpha = s.baseAlpha * (0.3 + 0.7 * twinkle);
+
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.fill();
+      }
+
+      requestAnimationFrame(animateStars);
+    }
+
+    animateStars();
+
+    /********** CUENTA REGRESIVA AL 11/12/2025 **********/
+    // Mes 11 = diciembre (JS usa 0-based)
+    const targetDate = new Date(2025, 11, 11, 0, 0, 0);
+    const countdownEl = document.getElementById("countdown");
+
+    function updateCountdown() {
+      const now = new Date();
+      const diff = targetDate - now;
+
+      if (diff <= 0) {
+        countdownEl.textContent = "¡Ya casi llega!";
+        return;
+      }
+
+      const totalSeconds = Math.floor(diff / 1000);
+      const days = Math.floor(totalSeconds / (3600 * 24));
+      const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      const pad = (n) => String(n).padStart(2, "0");
+
+      countdownEl.innerHTML = `
+        <span class="unit">
+          ${pad(days)} <span class="label">DÍAS</span>
+        </span>
+        <span class="unit">
+          ${pad(hours)} <span class="label">HRS</span>
+        </span>
+        <span class="unit">
+          ${pad(minutes)} <span class="label">MIN</span>
+        </span>
+        <span class="unit">
+          ${pad(seconds)} <span class="label">SEG</span>
+        </span>
+      `;
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    /********** FRASES CON APARICIÓN / DESAPARICIÓN **********/
+    const phrases = [
+      "Tell me what you gon' do to me",
+      "Confrontation ain't nothin' new to me",
+      "You can bring a bullet, bring a sword, bring a morgue",
+      "But you can't bring the truth to me",
+      "- you and all your expectations",
+      "I don't even want your congratulations",
+      "I recognize your false confidence",
+      "And calculated promises all in your conversation",
+      "I hate people that feel entitled",
+      "Look at me crazy 'cause I ain't invite you",
+      "Oh, you important? You the moral to the story, you endorsing?",
+      "Motherf-, I don't even like you",
+      "Corrupt a man's heart with a gift",
+      "That's how you find out who you dealin' with",
+      "A small percentage, who I'm building with",
+      "I want the credit if I'm losing, or I'm winning",
+      "On my momma, that's the realest sh-"
+    ];
+
+    const phraseElement = document.getElementById("phrase-text");
+    let phraseIndex = 0;
+
+    function cyclePhrases() {
+      // set texto actual
+      phraseElement.textContent = phrases[phraseIndex];
+      // fade in
+      requestAnimationFrame(() => {
+        phraseElement.classList.add("visible");
+      });
+
+      // visible unos segundos, luego fade out
+      const visibleTime = 3500; // ms que permanece visible
+      const transitionTime = 2000; // coincide con CSS (2s)
+
+      setTimeout(() => {
+        phraseElement.classList.remove("visible");
+        // esperar a que termine el fade out antes de cambiar de frase
+        setTimeout(() => {
+          phraseIndex = (phraseIndex + 1) % phrases.length;
+          cyclePhrases();
+        }, transitionTime);
+      }, visibleTime);
+    }
+
+    cyclePhrases();
+  </script>
+</body>
+</html>
