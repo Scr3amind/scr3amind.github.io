@@ -125,7 +125,6 @@
   </div>
 
   <script>
-    /********** ESTRELLAS TIPO UNIVERSO **********/
     const canvas = document.getElementById("bg-canvas");
     const ctx = canvas.getContext("2d");
 
@@ -177,7 +176,6 @@
       ctx.fillRect(0, 0, width, height);
 
       for (const s of stars) {
-        // movimiento sutil, como si la cámara se desplazara
         const speed = 0.12 * s.depth;
         s.y += speed;
         if (s.y > height) {
@@ -185,7 +183,6 @@
           s.x = Math.random() * width;
         }
 
-        // twinkle (parpadeo suave)
         const twinkle =
           Math.sin(t * s.twinkleSpeed + s.twinkleOffset) * 0.5 + 0.5; // 0..1
         const alpha = s.baseAlpha * (0.3 + 0.7 * twinkle);
@@ -201,8 +198,7 @@
 
     animateStars();
 
-    /********** CUENTA REGRESIVA AL 11/12/2025 **********/
-    // Mes 11 = diciembre (JS usa 0-based)
+
     const targetDate = new Date(2025, 11, 11, 0, 0, 0);
     const countdownEl = document.getElementById("countdown");
 
@@ -242,7 +238,6 @@
     updateCountdown();
     setInterval(updateCountdown, 1000);
 
-    /********** FRASES CON APARICIÓN / DESAPARICIÓN **********/
     const phrases = [
       "Tell me what you gon' do to me",
       "Confrontation ain't nothin' new to me",
@@ -274,13 +269,11 @@
         phraseElement.classList.add("visible");
       });
 
-      // visible unos segundos, luego fade out
-      const visibleTime = 3500; // ms que permanece visible
-      const transitionTime = 2000; // coincide con CSS (2s)
+      const visibleTime = 3500; 
+      const transitionTime = 2000; 
 
       setTimeout(() => {
         phraseElement.classList.remove("visible");
-        // esperar a que termine el fade out antes de cambiar de frase
         setTimeout(() => {
           phraseIndex = (phraseIndex + 1) % phrases.length;
           cyclePhrases();
